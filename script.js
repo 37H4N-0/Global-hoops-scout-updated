@@ -4,24 +4,36 @@ let locker = JSON.parse(localStorage.getItem('ghLocker')) || [];
 let compareList = [];
 let currentFilter = "ALL";
 
-// FALLBACK IMAGES AND DATA FOR PROTECTION BLOCK IF API HAS CORRUPTED MEDIA LINKS
 const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80";
 
-// LIVE STREAM CONNECTIVITY ENGINE
+// HIGH-SPEED LIVE STREAM ENGINE WITH CACHE LAYER
 async function connectToLiveStream() {
+    // 1. FAST BOOT: Instantly load cached database snapshot if it exists
+    const cachedData = localStorage.getItem('gh_stream_cache');
+    if (cachedData) {
+        try {
+            shoeDatabase = JSON.parse(cachedData);
+            console.log("FAST BOOT: Cache loaded successfully.");
+            initHero();
+            updateActivePageData();
+        } catch (e) {
+            console.error("Cache corrupted, clearing...");
+            localStorage.removeItem('gh_stream_cache');
+        }
+    }
+
     try {
-        // Fetching live snapshot data from public sneaker database repository
-        const response = await fetch('https://raw.githubusercontent.com/thesneakerdatabase/sneaker-database-data/master/sneakers.json');
-        if (!response.ok) throw new Error("Stream connection failed");
+        // 2. HIGH-SPEED CDN BACKBONE: Bypasses standard raw github firewalls
+        const response = await fetch('https://cdn.jsdelivr.net/gh/thesneakerdatabase/sneaker-database-data@master/sneakers.json');
+        if (!response.ok) throw new Error("Network stream failed");
         
         const rawData = await response.json();
         
-        // Filter down to performance basketball and relevant brand profiles
-        shoeDatabase = rawData.filter(item => 
+        // Clean and optimize incoming stream dataset
+        const parsedDatabase = rawData.filter(item => 
             (item.category && item.category.toLowerCase() === "basketball") || 
             ["nike", "adidas", "puma", "jordan", "anta", "li-ning", "361"].includes(item.brand?.toLowerCase())
         ).map((item, index) => {
-            // Determine tier categories dynamically
             let calculatedType = "SIGNATURE";
             const brandLower = item.brand?.toLowerCase() || "";
             if (!["nike", "jordan", "adidas"].includes(brandLower)) {
@@ -43,16 +55,23 @@ async function connectToLiveStream() {
             };
         });
 
-        // Initialize user visual nodes
+        // 3. BACKGROUND SYNC: Update application memory and cache silently
+        shoeDatabase = parsedDatabase;
+        localStorage.setItem('gh_stream_cache', JSON.stringify(shoeDatabase));
+        
+        // Refresh UI smoothly with fresh live stream data
         initHero();
         updateActivePageData();
         
     } catch (error) {
-        console.error("GLOBAL DATA STREAM INTERRUPTED:", error);
-        document.getElementById('archive-grid').innerHTML = 
-            `<div style="grid-column:1/-1; text-align:center; padding:100px 0; font-weight:900; color:var(--accent);">
-                PIPELINE OFFLINE. SECURING ALTERNATE ROUTE...
-             </div>`;
+        console.error("BACKGROUND STREAM SYNC INTERRUPTED:", error);
+        // If we have no cache and the stream failed completely, show error
+        if (shoeDatabase.length === 0) {
+            document.getElementById('archive-grid').innerHTML = 
+                `<div style="grid-column:1/-1; text-align:center; padding:100px 0; font-weight:900; color:var(--accent);">
+                    STREAM CONNECTION TIMEOUT. TRY CLOSING AD-BLOCKERS OR TESTING ON MOBILE CELLULAR DATA.
+                 </div>`;
+        }
     }
 }
 
@@ -61,9 +80,12 @@ function getSystemDateString() {
 }
 
 function updateActivePageData() {
-    if (document.getElementById('page-collection').classList.contains('active')) renderArchive();
-    if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
-    if (document.getElementById('page-locker').classList.contains('active')) renderLocker();
+    const archiveGrid = document.getElementById('archive-grid');
+    if (archiveGrid) {
+        if (document.getElementById('page-collection').classList.contains('active')) renderArchive();
+        if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+        if (document.getElementById('page-locker').classList.contains('active')) renderLocker();
+    }
 }
 
 // ROUTER SYSTEM
@@ -119,7 +141,6 @@ function renderArchive() {
     }
 
     grid.innerHTML = '';
-    // Archive restriction logic: Items released today or in past timelines
     const dynamicArchiveDataset = shoeDatabase.filter(shoe => shoe.date <= todayStr);
 
     const filtered = dynamicArchiveDataset.filter(s => {
@@ -147,7 +168,6 @@ function renderCalendar() {
     list.innerHTML = '';
     const todayStr = getSystemDateString();
 
-    // Upcoming entries logic
     const upcomingDrops = shoeDatabase.filter(shoe => shoe.date > todayStr)
                                       .sort((a,b) => new Date(a.date) - new Date(b.date));
     
@@ -268,28 +288,4 @@ function openModal(shoe) {
                     <div style="font-weight:900; font-size:1.2rem; margin-top:4px;">${shoe.date}</div>
                 </div>
                 <div>
-                    <small style="opacity:0.6; font-weight:900; font-size:0.7rem;">BASE RETAIL MSRP</small>
-                    <div style="font-weight:900; font-size:1.2rem; margin-top:4px; color:var(--accent);">$${shoe.price}</div>
-                </div>
-            </div>
-
-            <button class="explore-btn" style="background:var(--black); color:var(--white); width:100%; border:none; padding:18px;" onclick="closeModal()">RETURN TO PORTAL</button>
-        </div>
-    `;
-    document.getElementById('modal').style.display = 'block';
-    document.body.style.overflow = 'hidden'; 
-}
-
-function openModalById(id) { openModal(shoeDatabase.find(x => x.id === id)); }
-function closeModal() { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
-function closeCompareModal() { document.getElementById('compare-modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
-function clearCompare() { compareList = []; updateCompareTray(); updateActivePageData(); }
-
-document.getElementById('theme-toggle').onclick = () => {
-    document.body.classList.toggle('dark-theme');
-    document.getElementById('theme-toggle').innerText = document.body.classList.contains('dark-theme') ? 'LIGHT' : 'DARK';
-};
-
-// INITIALIZATION PIPELINE BOOT
-connectToLiveStream();
-document.getElementById('locker-count').innerText = locker.length;
+                    <small style="opacity:0.6; font-weight:900; font-size:0.7rem
