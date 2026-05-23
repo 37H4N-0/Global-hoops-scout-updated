@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLOBAL HOOPS // PERFORMANCE ARCHIVE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <nav class="main-nav">
+        <div class="nav-logo" onclick="showPage('home')">GLOBAL HOOPS</div>
+        <div class="nav-links">
+            <button onclick="showPage('home')">HOME</button>
+            <button onclick="showPage('collection')">ARCHIVE</button>
+            <button onclick="showPage('calendar')">DROPS</button>
+            <button onclick="showPage('locker')">LOCKER (<span id="locker-count">0</span>)</button>
+            <button id="theme-toggle">DARK</button>
+        </div>
+    </nav>
+
+    <section id="page-home" class="page active">
+        <div id="featured-hero" class="hero-section">
+            <div style="text-align:center; font-weight:900; opacity:0.5;">CONNECTING TO LIVE STREAM...</div>
+        </div>
+        <div class="cta-bar">
+            <button class="explore-btn" onclick="showPage('calendar')">VIEW DROP CALENDAR</button>
+        </div>
+    </section>
+
+    <section id="page-collection" class="page">
+        <header id="main-header">
+            <h1 class="main-logo">THE ARCHIVE</h1>
+            <div class="header-controls">
+                <input type="text" id="search-bar" placeholder="SEARCH PLAYER OR TECH..." oninput="renderArchive()">
+            </div>
+        </header>
+        <main class="content-container">
+            <div id="archive-grid" class="shoe-grid"></div>
+        </main>
+    </section>
+
+    <section id="page-calendar" class="page">
+        <header id="main-header">
+            <h1 class="main-logo">DROP CALENDAR</h1>
+            <p style="padding:0 5%; font-weight:900; color:var(--accent);">LATEST SCOUTING RELEASES</p>
+        </header>
+        <main class="content-container">
+            <div id="calendar-list" class="calendar-vertical-list"></div>
+        </main>
+    </section>
+
+    <section id="page-locker" class="page">
+        <header id="main-header">
+            <h1 class="main-logo">MY LOCKER</h1>
+        </header>
+        <main class="content-container">
+            <div id="locker-grid" class="shoe-grid"></div>
+        </main>
+    </section>
+
+    <div id="compare-tray" class="compare-tray">
+        <div class="compare-slots" id="compare-slots"></div>
+        <button class="explore-btn" style="font-size: 0.6rem; padding: 10px;" onclick="openCompareModal()">COMPARE VS</button>
+        <button onclick="clearCompare()" style="background:none; border:none; color:grey; cursor:pointer; font-weight:900; margin-left:10px;">CLEAR</button>
+    </div>
+
+    <div id="modal" class="modal-overlay">
+        <button class="modal-close" onclick="closeModal()">← BACK</button>
+        <div class="modal-window">
+            <div id="modal-body" class="modal-layout"></div>
+        </div>
+    </div>
+
+    <div id="compare-modal" class="modal-overlay">
+        <button class="modal-close" onclick="closeCompareModal()">← CLOSE VS</button>
+        <div class="modal-window">
+            <div id="compare-results" class="compare-grid-layout"></div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
